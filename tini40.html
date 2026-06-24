@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tini · 40</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --white: #ffffff;
+    --black: #0a0a0a;
+    --grey-light: #f0f0f0;
+    --grey-mid: #b0b0b0;
+    --grey-text: #555;
+    --accent: #c8a96e;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    color: var(--black);
+    overflow-x: hidden;
+  }
+
+  /* ── PROGRESS BAR ── */
+  #progress-bar-wrap {
+    position: fixed; top: 0; left: 0; width: 100%; z-index: 999;
+    padding: 18px 32px 0;
+    opacity: 0; transition: opacity 0.6s var(--ease);
+    pointer-events: none;
+  }
+  #progress-bar-wrap.visible { opacity: 1; }
+  #progress-label {
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--grey-mid); margin-bottom: 6px;
+    display: flex; justify-content: space-between;
+  }
+  #progress-track {
+    width: 100%; height: 1px; background: var(--grey-light);
+  }
+  #progress-fill {
+    height: 1px; background: var(--accent);
+    width: 0%; transition: width 1.2s var(--ease);
+  }
+
+  /* ── SCREENS ── */
+  .screen {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 60px 32px 40px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.8s var(--ease);
+    overflow-y: auto;
+  }
+  .screen.active { opacity: 1; pointer-events: all; }
+
+  /* ── TYPOGRAPHY ── */
+  .display {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300; font-size: clamp(48px, 10vw, 96px);
+    letter-spacing: -0.01em; line-height: 1;
+    text-align: center;
+  }
+  .display-italic {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic; font-weight: 300;
+    font-size: clamp(36px, 8vw, 72px);
+    letter-spacing: -0.01em; line-height: 1.1;
+  }
+  .body-text {
+    font-size: clamp(14px, 2.5vw, 17px);
+    color: var(--grey-text); line-height: 1.8;
+    text-align: center; max-width: 460px;
+  }
+  .label {
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--grey-mid);
+  }
+  .level-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300; font-size: clamp(28px, 6vw, 52px);
+    letter-spacing: 0.05em; text-align: center;
+    text-transform: uppercase;
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-block; cursor: pointer;
+    border: 1px solid var(--black);
+    background: transparent; color: var(--black);
+    padding: 14px 40px; border-radius: 40px;
+    font-family: 'Inter', sans-serif; font-weight: 300;
+    font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase;
+    transition: all 0.3s var(--ease);
+    user-select: none;
+  }
+  .btn:hover { background: var(--black); color: var(--white); }
+  .btn-small {
+    padding: 10px 24px; font-size: 10px; letter-spacing: 2px;
+  }
+  .btn-hint {
+    border-color: var(--grey-mid); color: var(--grey-mid);
+  }
+  .btn-hint:hover { background: var(--grey-mid); color: var(--white); border-color: var(--grey-mid); }
+
+  /* ── SPACERS ── */
+  .sp { display: block; }
+  .sp-8 { height: 8px; }
+  .sp-16 { height: 16px; }
+  .sp-24 { height: 24px; }
+  .sp-32 { height: 32px; }
+  .sp-48 { height: 48px; }
+  .sp-64 { height: 64px; }
+
+  /* ══════════════════════════════════
+     SCREEN 0 — INTRO
+  ══════════════════════════════════ */
+  #s-intro { background: var(--white); }
+
+  /* ══════════════════════════════════
+     SCREEN 1 — LEVEL 1: LAS CUATRO LLAVES
+  ══════════════════════════════════ */
+  #s-level1 { background: var(--white); justify-content: flex-start; padding-top: 80px; }
+  .riddle-card {
+    width: 100%; max-width: 520px;
+    border: 1px solid var(--grey-light);
+    border-radius: 20px; padding: 36px;
+    margin-bottom: 20px;
+    transition: border-color 0.4s, box-shadow 0.4s;
+  }
+  .riddle-card.solved {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .riddle-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic; font-size: clamp(17px, 3.5vw, 22px);
+    line-height: 1.7; color: #333; text-align: center;
+    margin-bottom: 24px;
+  }
+  .riddle-input {
+    width: 100%; border: none; border-bottom: 1px solid var(--grey-light);
+    outline: none; padding: 8px 0; font-family: 'Inter', sans-serif;
+    font-size: 15px; font-weight: 300; background: transparent;
+    color: var(--black); text-align: center;
+    transition: border-color 0.3s;
+  }
+  .riddle-input:focus { border-bottom-color: var(--black); }
+  .riddle-input:disabled { color: var(--grey-mid); }
+  .riddle-feedback {
+    font-size: 11px; letter-spacing: 1px; text-align: center;
+    height: 18px; margin-top: 8px; transition: opacity 0.3s;
+  }
+  .feedback-ok { color: var(--accent); }
+  .feedback-err { color: #c0392b; }
+  .hints-area { margin-top: 16px; }
+  .hint-text {
+    font-size: 12px; color: var(--grey-text); line-height: 1.6;
+    margin-top: 8px; padding-left: 12px; border-left: 2px solid var(--grey-light);
+    opacity: 0; transform: translateY(4px);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  .hint-text.shown { opacity: 1; transform: none; }
+  .lock-row {
+    display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;
+    margin: 24px 0;
+  }
+  .lock-icon {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .lock-icon svg { width: 36px; height: 36px; transition: all 0.6s var(--ease); }
+  .lock-icon .lock-label {
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--grey-mid); transition: color 0.4s;
+  }
+  .lock-icon.open svg .shackle { transform: translateY(-4px) rotate(-30deg); }
+  .lock-icon.open .lock-label { color: var(--accent); }
+
+  /* ══════════════════════════════════
+     SCREEN 2 — LEVEL 2: LABERINTO
+  ══════════════════════════════════ */
+  #s-level2 { background: var(--white); }
+  #maze-canvas {
+    border: 1px solid var(--grey-light);
+    border-radius: 16px;
+    touch-action: none;
+    cursor: grab;
+  }
+  #maze-canvas:active { cursor: grabbing; }
+
+  /* ══════════════════════════════════
+     SCREEN 3 — LEVEL 3: EL TIEMPO
+  ══════════════════════════════════ */
+  #s-level3 { background: var(--white); }
+  .time-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300; font-size: clamp(52px, 12vw, 110px);
+    line-height: 1; opacity: 0;
+    transition: opacity 1s var(--ease), transform 1s var(--ease);
+    transform: translateY(12px);
+    color: var(--black);
+  }
+  .time-number.show { opacity: 1; transform: none; }
+  .time-sub {
+    font-size: clamp(11px, 2vw, 14px); letter-spacing: 3px;
+    text-transform: uppercase; color: var(--grey-mid);
+    opacity: 0; transition: opacity 0.8s var(--ease) 0.3s;
+  }
+  .time-sub.show { opacity: 1; }
+
+  /* ══════════════════════════════════
+     SCREEN 4 — LEVEL 4: CÓDIGO
+  ══════════════════════════════════ */
+  #s-level4 { background: var(--white); }
+  .code-input {
+    font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 300;
+    letter-spacing: 4px; text-transform: uppercase;
+    border: none; border-bottom: 1px solid var(--grey-light);
+    outline: none; background: transparent; text-align: center;
+    padding: 10px 0; width: 260px; color: var(--black);
+    transition: border-color 0.3s;
+  }
+  .code-input:focus { border-bottom-color: var(--black); }
+
+  /* ══════════════════════════════════
+     SCREEN 5 — LEVEL 5: LA CAJA
+  ══════════════════════════════════ */
+  #s-level5 { background: var(--white); }
+
+  /* ══════════════════════════════════
+     SCREEN 6 — FINAL
+  ══════════════════════════════════ */
+  #s-final {
+    background: var(--white);
+    transition: background 3s var(--ease);
+  }
+  #s-final.going-dark { background: var(--black); }
+
+  #final-percent {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(52px, 12vw, 96px);
+    font-weight: 300; color: var(--white);
+    opacity: 0; transition: opacity 0.6s;
+  }
+  #final-percent.show { opacity: 1; }
+
+  /* Lamp */
+  #lamp-wrap {
+    opacity: 0; transition: opacity 1.5s var(--ease);
+    display: flex; flex-direction: column; align-items: center;
+    gap: 0;
+  }
+  #lamp-wrap.visible { opacity: 1; }
+
+  #lamp-light {
+    width: 0; height: 0;
+    border-left: 70px solid transparent;
+    border-right: 70px solid transparent;
+    border-top: 0px solid transparent;
+    transition: border-top-width 2.5s var(--ease),
+                border-top-color 2.5s var(--ease),
+                opacity 2.5s var(--ease);
+    opacity: 0;
+    position: relative; top: 2px;
+    filter: blur(6px);
+  }
+  #lamp-light.lit {
+    border-top-width: 160px;
+    border-top-color: rgba(255, 230, 130, 0.18);
+    opacity: 1;
+  }
+
+  /* SVG lamp */
+  #lamp-svg { filter: drop-shadow(0 0 0px rgba(255,220,100,0)); transition: filter 2.5s var(--ease); }
+  #lamp-svg.lit { filter: drop-shadow(0 0 18px rgba(255,220,100,0.55)); }
+
+  .final-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic; font-weight: 300;
+    font-size: clamp(26px, 5vw, 44px);
+    color: var(--white); text-align: center;
+    opacity: 0; transform: translateY(10px);
+    transition: opacity 1.4s var(--ease), transform 1.4s var(--ease);
+  }
+  .final-text.show { opacity: 1; transform: none; }
+
+  #glow-bg {
+    position: fixed; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 60% 40% at 50% 40%,
+      rgba(255,220,100,0.08) 0%, transparent 70%);
+    opacity: 0; transition: opacity 3s var(--ease);
+    z-index: 0;
+  }
+  #glow-bg.lit { opacity: 1; }
+  #s-final > * { position: relative; z-index: 1; }
+
+  /* ── UTILITIES ── */
+  .fade-in {
+    animation: fadeIn 0.8s var(--ease) both;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .divider {
+    width: 32px; height: 1px; background: var(--grey-light); margin: 0 auto;
+  }
+
+  .padded-center {
+    display: flex; flex-direction: column;
+    align-items: center; text-align: center;
+  }
+
+  /* Candados abiertos animación */
+  @keyframes lockOpen {
+    0% { transform: translateY(0) rotate(0); }
+    40% { transform: translateY(-8px) rotate(-25deg); }
+    100% { transform: translateY(-8px) rotate(-25deg); }
+  }
+  .lock-opened .shackle-group {
+    animation: lockOpen 0.6s var(--ease) forwards;
+    transform-origin: bottom left;
+  }
+
+  /* Responsive tweaks */
+  @media (max-width: 480px) {
+    .screen { padding: 70px 20px 40px; }
+    .riddle-card { padding: 24px 20px; }
+    #progress-bar-wrap { padding: 14px 20px 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PROGRESS BAR -->
+<div id="progress-bar-wrap">
+  <div id="progress-label">
+    <span>Recuerdos recuperados</span>
+    <span id="progress-pct">0%</span>
+  </div>
+  <div id="progress-track"><div id="progress-fill"></div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 0: INTRO
+═══════════════════════════════════════════ -->
+<div class="screen active" id="s-intro">
+  <div class="padded-center fade-in">
+    <div class="display">Tini</div>
+    <span class="sp sp-40" style="height:40px"></span>
+    <div class="divider"></div>
+    <span class="sp sp-40" style="height:40px"></span>
+    <p class="body-text">Durante 40 años acumulaste recuerdos.</p>
+    <span class="sp sp-8"></span>
+    <p class="body-text">Hoy tendrás que descubrir uno más.</p>
+    <span class="sp sp-64"></span>
+    <button class="btn" onclick="goToLevel1()">Comenzar</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 1: LAS CUATRO LLAVES
+═══════════════════════════════════════════ -->
+<div class="screen" id="s-level1">
+  <div style="width:100%;max-width:520px">
+
+    <div class="padded-center" style="margin-bottom:32px">
+      <div class="label">Nivel I</div>
+      <span class="sp sp-16"></span>
+      <div class="level-title">Las cuatro llaves</div>
+      <span class="sp sp-8"></span>
+      <p class="body-text" style="font-size:13px">Cada respuesta correcta abrirá un candado.</p>
+    </div>
+
+    <!-- Lock row -->
+    <div class="lock-row" id="lock-row">
+      <!-- 4 locks injected by JS -->
+    </div>
+
+    <!-- Riddle 1 -->
+    <div class="riddle-card" id="riddle-1">
+      <p class="riddle-text">
+        Cuanto más seco estoy,<br>más me mojo.<br><br>¿Qué soy?
+      </p>
+      <input class="riddle-input" id="ans-1" placeholder="Tu respuesta…" autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="riddle-feedback" id="fb-1"></div>
+      <div class="hints-area" id="hints-1"></div>
+      <span class="sp sp-16"></span>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-small" onclick="checkAnswer(1)">Comprobar</button>
+        <button class="btn btn-small btn-hint" onclick="showHint(1)">Mostrar pista</button>
+      </div>
+    </div>
+
+    <!-- Riddle 2 -->
+    <div class="riddle-card" id="riddle-2" style="opacity:0.4;pointer-events:none">
+      <p class="riddle-text">
+        Tengo ciudades pero no casas.<br>Tengo ríos pero no agua.<br>Tengo montañas pero no árboles.<br><br>¿Qué soy?
+      </p>
+      <input class="riddle-input" id="ans-2" placeholder="Tu respuesta…" autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="riddle-feedback" id="fb-2"></div>
+      <div class="hints-area" id="hints-2"></div>
+      <span class="sp sp-16"></span>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-small" onclick="checkAnswer(2)">Comprobar</button>
+        <button class="btn btn-small btn-hint" onclick="showHint(2)">Mostrar pista</button>
+      </div>
+    </div>
+
+    <!-- Riddle 3 -->
+    <div class="riddle-card" id="riddle-3" style="opacity:0.4;pointer-events:none">
+      <p class="riddle-text">
+        Cuanto más me sacás,<br>más grande me vuelvo.<br><br>¿Qué soy?
+      </p>
+      <input class="riddle-input" id="ans-3" placeholder="Tu respuesta…" autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="riddle-feedback" id="fb-3"></div>
+      <div class="hints-area" id="hints-3"></div>
+      <span class="sp sp-16"></span>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-small" onclick="checkAnswer(3)">Comprobar</button>
+        <button class="btn btn-small btn-hint" onclick="showHint(3)">Mostrar pista</button>
+      </div>
+    </div>
+
+    <!-- Riddle 4 -->
+    <div class="riddle-card" id="riddle-4" style="opacity:0.4;pointer-events:none">
+      <p class="riddle-text">
+        Siempre está delante de vos,<br>pero nunca podés alcanzarlo.<br><br>¿Qué es?
+      </p>
+      <input class="riddle-input" id="ans-4" placeholder="Tu respuesta…" autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="riddle-feedback" id="fb-4"></div>
+      <div class="hints-area" id="hints-4"></div>
+      <span class="sp sp-16"></span>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-small" onclick="checkAnswer(4)">Comprobar</button>
+        <button class="btn btn-small btn-hint" onclick="showHint(4)">Mostrar pista</button>
+      </div>
+    </div>
+
+    <span class="sp sp-48"></span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 2: LABERINTO
+═══════════════════════════════════════════ -->
+<div class="screen" id="s-level2">
+  <div class="padded-center" style="gap:0">
+    <div class="label">Nivel II</div>
+    <span class="sp sp-16"></span>
+    <div class="level-title">El Laberinto</div>
+    <span class="sp sp-8"></span>
+    <p class="body-text" style="font-size:13px">Llevá la llave hasta la cerradura.</p>
+    <span class="sp sp-24"></span>
+    <canvas id="maze-canvas" width="320" height="320"></canvas>
+    <span class="sp sp-24"></span>
+    <p class="body-text" style="font-size:12px;color:var(--grey-mid)">
+      Usá las flechas del teclado o arrastrá con el dedo.
+    </p>
+    <span class="sp sp-16"></span>
+    <p id="maze-msg" class="body-text" style="color:var(--accent);opacity:0;transition:opacity 0.5s;font-size:13px"></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 3: EL TIEMPO
+═══════════════════════════════════════════ -->
+<div class="screen" id="s-level3">
+  <div class="padded-center" style="gap:0">
+    <div id="t1" class="time-number">40</div>
+    <div id="t1s" class="time-sub">años</div>
+    <span class="sp sp-32"></span>
+    <div id="t2" class="time-number">480</div>
+    <div id="t2s" class="time-sub">meses</div>
+    <span class="sp sp-32"></span>
+    <div id="t3" class="time-number">14.600</div>
+    <div id="t3s" class="time-sub">días</div>
+    <span class="sp sp-48"></span>
+    <p id="t-final" class="body-text" style="opacity:0;transition:opacity 1.2s var(--ease);font-size:clamp(15px,3vw,20px);font-family:'Cormorant Garamond',serif;font-style:italic;color:#333">
+      Pero todavía queda uno por descubrir.
+    </p>
+    <span class="sp sp-32"></span>
+    <button id="t-next-btn" class="btn" onclick="goToLevel4()" style="opacity:0;transition:opacity 0.8s var(--ease);pointer-events:none">
+      Continuar
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 4: EL CÓDIGO
+═══════════════════════════════════════════ -->
+<div class="screen" id="s-level4">
+  <div class="padded-center" style="gap:0;max-width:460px">
+    <div class="label">Nivel IV</div>
+    <span class="sp sp-16"></span>
+    <div class="level-title">El Código</div>
+    <span class="sp sp-32"></span>
+    <p class="body-text">La siguiente llave no está aquí.</p>
+    <span class="sp sp-8"></span>
+    <p class="body-text">Buscala en el mundo real.</p>
+    <span class="sp sp-48"></span>
+    <input class="code-input" id="code-input" placeholder="· · · · · · · · · · ·"
+      autocomplete="off" autocorrect="off" spellcheck="false"
+      oninput="this.value=this.value.toUpperCase()">
+    <span class="sp sp-8"></span>
+    <div class="riddle-feedback" id="code-fb" style="height:18px"></div>
+    <span class="sp sp-24"></span>
+    <button class="btn" onclick="checkCode()">Verificar</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 5: LA CAJA
+═══════════════════════════════════════════ -->
+<div class="screen" id="s-level5">
+  <div class="padded-center" style="gap:0;max-width:520px">
+    <div class="label">Nivel V</div>
+    <span class="sp sp-16"></span>
+    <div class="level-title">La Caja</div>
+    <span class="sp sp-32"></span>
+    <div class="riddle-card" id="riddle-5" style="width:100%">
+      <p class="riddle-text">
+        ¿Qué hay que poner dentro de una caja<br>para que pese menos?
+      </p>
+      <input class="riddle-input" id="ans-5" placeholder="Tu respuesta…" autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="riddle-feedback" id="fb-5"></div>
+      <div class="hints-area" id="hints-5"></div>
+      <span class="sp sp-16"></span>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-small" onclick="checkAnswer5()">Comprobar</button>
+        <button class="btn btn-small btn-hint" onclick="showHint(5)">Mostrar pista</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 6: FINAL
+═══════════════════════════════════════════ -->
+<div class="screen" id="s-final">
+  <div id="glow-bg"></div>
+  <div id="final-content" class="padded-center" style="gap:0;position:relative;z-index:1">
+    <!-- percent counter -->
+    <div id="final-percent"></div>
+    <!-- lamp (hidden at start) -->
+    <div id="lamp-wrap" style="display:none;align-items:center;flex-direction:column">
+      <!-- cone of light above lamp -->
+      <div id="lamp-light"></div>
+      <!-- lamp SVG -->
+      <svg id="lamp-svg" width="120" height="160" viewBox="0 0 120 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- shade -->
+        <path d="M30 70 L90 70 L78 30 L42 30 Z" fill="#e8e0d0" stroke="#c8b89a" stroke-width="1.5"/>
+        <!-- bulb glow -->
+        <circle id="bulb-glow" cx="60" cy="72" r="0" fill="rgba(255,230,100,0)" style="transition: r 2.5s ease, fill 2.5s ease"/>
+        <!-- stem -->
+        <rect x="58" y="70" width="4" height="60" rx="2" fill="#d0c8b8"/>
+        <!-- base -->
+        <ellipse cx="60" cy="132" rx="28" ry="7" fill="#c8bfa8" stroke="#b0a88e" stroke-width="1"/>
+        <!-- shade rim -->
+        <rect x="28" y="68" width="64" height="4" rx="2" fill="#c8b89a"/>
+      </svg>
+      <span class="sp sp-40" style="height:40px"></span>
+      <p id="f-text1" class="final-text">Hoy agregás uno más.</p>
+      <span class="sp sp-24"></span>
+      <p id="f-text2" class="final-text" style="font-size:clamp(16px,3vw,24px);color:rgba(255,255,255,0.55)">Tu regalo te espera.</p>
+      <span class="sp sp-48"></span>
+      <p id="f-text3" class="final-text" style="font-size:clamp(11px,2vw,14px);letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.25);font-family:'Inter',sans-serif;font-style:normal">de Fran para Tini</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+const state = {
+  solved: [false, false, false, false], // riddles 1-4
+  hintCount: [0, 0, 0, 0, 0],          // hints shown per riddle (0-indexed: 0-3 for riddles 1-4, 4 for riddle 5)
+  hint5Count: 0,
+  currentScreen: 's-intro',
+  progress: 0
+};
+
+const HINTS = {
+  1: ['Vive en el baño.','Se usa después del agua.','Sirve para secarse.','Se humedece al usarla.','Está hecha de tela.'],
+  2: ['Se usa para viajar.','Puede doblarse.','Muestra países.','Tiene caminos.','Ayuda a orientarse.'],
+  3: ['Se crea quitando algo.','Puede estar en la tierra.','También en una pared.','Es un espacio vacío.','No es un objeto.'],
+  4: ['Todos lo tienen.','Todavía no llegó.','Siempre está adelante.','Tiene relación con el tiempo.','Nunca se puede tocar.'],
+  5: ['No se puede agarrar.','No ocupa espacio.','Hace que haya menos material.','Puede hacerse con una perforadora.','Es un espacio vacío.']
+};
+
+const ANSWERS = {
+  1: ['toalla'],
+  2: ['mapa'],
+  3: ['agujero','agujeros'],
+  4: ['futuro','el futuro'],
+  5: ['agujero','agujeros','un agujero']
+};
+
+// ── PROGRESS ──
+function setProgress(pct) {
+  state.progress = pct;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = pct + '%';
+}
+
+// ── SCREEN TRANSITIONS ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+  });
+  document.getElementById(id).classList.add('active');
+  state.currentScreen = id;
+  // Show progress bar after intro
+  if (id !== 's-intro') {
+    document.getElementById('progress-bar-wrap').classList.add('visible');
+  }
+  window.scrollTo(0,0);
+}
+
+// ── LOCK ICONS ──
+function buildLocks() {
+  const row = document.getElementById('lock-row');
+  row.innerHTML = '';
+  for (let i = 1; i <= 4; i++) {
+    row.innerHTML += `
+      <div class="lock-icon" id="lock-${i}">
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g class="shackle-group">
+            <path class="shackle" d="M11 17V13a7 7 0 0 1 14 0v4" stroke="#ccc" stroke-width="1.5" stroke-linecap="round"/>
+          </g>
+          <rect x="7" y="17" width="22" height="14" rx="3" fill="#f5f5f5" stroke="#ddd" stroke-width="1.2"/>
+          <circle cx="18" cy="23" r="2.5" fill="#ccc" class="lock-dot"/>
+        </svg>
+        <span class="lock-label">${i}</span>
+      </div>`;
+  }
+}
+
+function openLock(i) {
+  const lock = document.getElementById('lock-' + i);
+  if (!lock) return;
+  lock.classList.add('lock-opened');
+  lock.querySelector('.shackle').setAttribute('stroke', '#c8a96e');
+  lock.querySelector('.lock-dot').setAttribute('fill', '#c8a96e');
+  lock.querySelector('rect').setAttribute('stroke', '#c8a96e');
+  lock.querySelector('.lock-label').style.color = '#c8a96e';
+}
+
+// ══════════════════════════════════════════
+// INTRO → LEVEL 1
+// ══════════════════════════════════════════
+function goToLevel1() {
+  buildLocks();
+  showScreen('s-level1');
+  setProgress(0);
+}
+
+// ══════════════════════════════════════════
+// RIDDLES LOGIC
+// ══════════════════════════════════════════
+function normalize(str) {
+  return str.trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function checkAnswer(n) {
+  const input = document.getElementById('ans-' + n);
+  const fb = document.getElementById('fb-' + n);
+  const val = normalize(input.value);
+  const valid = ANSWERS[n].map(normalize);
+
+  if (valid.includes(val)) {
+    fb.textContent = '✓ Correcto';
+    fb.className = 'riddle-feedback feedback-ok';
+    input.disabled = true;
+    state.solved[n - 1] = true;
+    openLock(n);
+    document.getElementById('riddle-' + n).classList.add('solved');
+    // Unlock next
+    if (n < 4) {
+      const next = document.getElementById('riddle-' + (n + 1));
+      next.style.opacity = '1';
+      next.style.pointerEvents = 'auto';
+    }
+    // Progress
+    const cnt = state.solved.filter(Boolean).length;
+    setProgress(cnt * 5); // 5% per riddle in level 1
+    // Check all done
+    if (state.solved.every(Boolean)) {
+      setTimeout(allRiddlesDone, 1200);
+    }
+  } else if (val !== '') {
+    fb.textContent = '✗ Intentá de nuevo';
+    fb.className = 'riddle-feedback feedback-err';
+    input.style.borderBottomColor = '#c0392b';
+    setTimeout(() => { input.style.borderBottomColor = ''; }, 1000);
+  }
+}
+
+function showHint(n) {
+  const key = n === 5 ? 5 : n;
+  const idx = n === 5 ? state.hint5Count : state.hintCount[n - 1];
+  const hints = HINTS[key];
+  if (idx >= hints.length) return;
+
+  const area = document.getElementById('hints-' + n);
+  const el = document.createElement('p');
+  el.className = 'hint-text';
+  el.textContent = (idx + 1) + '. ' + hints[idx];
+  area.appendChild(el);
+  setTimeout(() => el.classList.add('shown'), 30);
+
+  if (n === 5) state.hint5Count++;
+  else state.hintCount[n - 1]++;
+}
+
+function allRiddlesDone() {
+  setProgress(25);
+  setTimeout(goToLevel2, 1000);
+}
+
+// ══════════════════════════════════════════
+// LEVEL 2: MAZE
+// ══════════════════════════════════════════
+const CELL = 40;
+const COLS = 8, ROWS = 8;
+
+let mazeGrid = [];
+let keyPos = {x:0, y:0};
+let lockPos = {x: COLS-1, y: ROWS-1};
+let isDragging = false, dragStart = null;
+
+function goToLevel2() {
+  showScreen('s-level2');
+  initMaze();
+}
+
+function initMaze() {
+  // Build a simple maze using recursive backtracking
+  mazeGrid = [];
+  for (let r = 0; r < ROWS; r++) {
+    mazeGrid[r] = [];
+    for (let c = 0; c < COLS; c++) {
+      mazeGrid[r][c] = { walls: [true,true,true,true], visited: false };
+    }
+  }
+  carveMaze(0, 0);
+  keyPos = {x: 0, y: 0};
+  drawMaze();
+}
+
+function carveMaze(c, r) {
+  mazeGrid[r][c].visited = true;
+  const dirs = shuffle([0,1,2,3]); // N E S W
+  const dc = [0,1,0,-1];
+  const dr = [-1,0,1,0];
+  const opp = [2,3,0,1];
+  for (const d of dirs) {
+    const nc = c + dc[d], nr = r + dr[d];
+    if (nc >= 0 && nc < COLS && nr >= 0 && nr < ROWS && !mazeGrid[nr][nc].visited) {
+      mazeGrid[r][c].walls[d] = false;
+      mazeGrid[nr][nc].walls[opp[d]] = false;
+      carveMaze(nc, nr);
+    }
+  }
+}
+
+function shuffle(arr) {
+  for (let i = arr.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function drawMaze() {
+  const canvas = document.getElementById('maze-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Background
+  ctx.fillStyle = '#fafafa';
+  ctx.fillRect(0,0,W,H);
+
+  // Walls
+  ctx.strokeStyle = '#e0e0e0';
+  ctx.lineWidth = 1.5;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const x = c * CELL, y = r * CELL;
+      const w = mazeGrid[r][c].walls;
+      ctx.beginPath();
+      if (w[0]) { ctx.moveTo(x,y); ctx.lineTo(x+CELL,y); } // N
+      if (w[1]) { ctx.moveTo(x+CELL,y); ctx.lineTo(x+CELL,y+CELL); } // E
+      if (w[2]) { ctx.moveTo(x,y+CELL); ctx.lineTo(x+CELL,y+CELL); } // S
+      if (w[3]) { ctx.moveTo(x,y); ctx.lineTo(x,y+CELL); } // W
+      ctx.stroke();
+    }
+  }
+
+  // Lock (destination)
+  const lx = lockPos.x * CELL + CELL/2;
+  const ly = lockPos.y * CELL + CELL/2;
+  ctx.fillStyle = '#c8a96e22';
+  ctx.beginPath();
+  ctx.arc(lx, ly, 14, 0, Math.PI*2);
+  ctx.fill();
+  drawLockIcon(ctx, lx, ly, 12, '#c8a96e');
+
+  // Key (player)
+  const kx = keyPos.x * CELL + CELL/2;
+  const ky = keyPos.y * CELL + CELL/2;
+  drawKeyIcon(ctx, kx, ky, '#333');
+}
+
+function drawKeyIcon(ctx, x, y, color) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 2;
+  // circle
+  ctx.beginPath();
+  ctx.arc(-4, 0, 6, 0, Math.PI*2);
+  ctx.stroke();
+  // shaft
+  ctx.beginPath();
+  ctx.moveTo(2,0); ctx.lineTo(12,0);
+  ctx.moveTo(10,0); ctx.lineTo(10,3);
+  ctx.moveTo(8,0); ctx.lineTo(8,3);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawLockIcon(ctx, x, y, r, color) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = 'transparent';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(0, 0, r, Math.PI, 0);
+  ctx.stroke();
+  ctx.fillStyle = color + '44';
+  ctx.fillRect(-r, 1, r*2, r*1.2);
+  ctx.strokeRect(-r, 1, r*2, r*1.2);
+  ctx.restore();
+}
+
+function moveKey(dx, dy) {
+  const c = keyPos.x, r = keyPos.y;
+  const cell = mazeGrid[r][c];
+  // Map direction to wall index: N=0 E=1 S=2 W=3
+  let wallIdx = -1;
+  if (dy === -1) wallIdx = 0;
+  if (dx === 1)  wallIdx = 1;
+  if (dy === 1)  wallIdx = 2;
+  if (dx === -1) wallIdx = 3;
+
+  if (!cell.walls[wallIdx]) {
+    keyPos.x += dx;
+    keyPos.y += dy;
+    drawMaze();
+    if (keyPos.x === lockPos.x && keyPos.y === lockPos.y) {
+      mazeSolved();
+    }
+  }
+}
+
+function mazeSolved() {
+  const msg = document.getElementById('maze-msg');
+  msg.textContent = 'Segundo candado abierto.';
+  msg.style.opacity = '1';
+  setProgress(50);
+  setTimeout(goToLevel3, 1600);
+}
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  if (state.currentScreen !== 's-level2') return;
+  if (e.key === 'ArrowUp')    { e.preventDefault(); moveKey(0,-1); }
+  if (e.key === 'ArrowDown')  { e.preventDefault(); moveKey(0,1); }
+  if (e.key === 'ArrowLeft')  { e.preventDefault(); moveKey(-1,0); }
+  if (e.key === 'ArrowRight') { e.preventDefault(); moveKey(1,0); }
+});
+
+// Touch/drag
+document.getElementById('maze-canvas').addEventListener('touchstart', e => {
+  e.preventDefault();
+  const t = e.touches[0];
+  dragStart = {x: t.clientX, y: t.clientY};
+}, {passive:false});
+document.getElementById('maze-canvas').addEventListener('touchmove', e => {
+  e.preventDefault();
+}, {passive:false});
+document.getElementById('maze-canvas').addEventListener('touchend', e => {
+  if (!dragStart) return;
+  const t = e.changedTouches[0];
+  const dx = t.clientX - dragStart.x;
+  const dy = t.clientY - dragStart.y;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    if (Math.abs(dx) > 15) moveKey(dx > 0 ? 1 : -1, 0);
+  } else {
+    if (Math.abs(dy) > 15) moveKey(0, dy > 0 ? 1 : -1);
+  }
+  dragStart = null;
+});
+
+// Mouse drag
+const mc = document.getElementById('maze-canvas');
+mc.addEventListener('mousedown', e => {
+  isDragging = true;
+  dragStart = {x: e.clientX, y: e.clientY};
+});
+document.addEventListener('mouseup', e => {
+  if (!isDragging || !dragStart) return;
+  const dx = e.clientX - dragStart.x;
+  const dy = e.clientY - dragStart.y;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    if (Math.abs(dx) > 15) moveKey(dx > 0 ? 1 : -1, 0);
+  } else {
+    if (Math.abs(dy) > 15) moveKey(0, dy > 0 ? 1 : -1);
+  }
+  isDragging = false; dragStart = null;
+});
+
+// ══════════════════════════════════════════
+// LEVEL 3: EL TIEMPO
+// ══════════════════════════════════════════
+function goToLevel3() {
+  showScreen('s-level3');
+  runTimeLevel();
+}
+
+function runTimeLevel() {
+  const nums = ['t1','t2','t3'];
+  const subs = ['t1s','t2s','t3s'];
+
+  nums.forEach(id => { document.getElementById(id).classList.remove('show'); });
+  subs.forEach(id => { document.getElementById(id).classList.remove('show'); });
+  document.getElementById('t-final').style.opacity = '0';
+  document.getElementById('t-next-btn').style.opacity = '0';
+  document.getElementById('t-next-btn').style.pointerEvents = 'none';
+
+  setTimeout(() => {
+    document.getElementById('t1').classList.add('show');
+    document.getElementById('t1s').classList.add('show');
+  }, 600);
+  setTimeout(() => {
+    document.getElementById('t2').classList.add('show');
+    document.getElementById('t2s').classList.add('show');
+  }, 2000);
+  setTimeout(() => {
+    document.getElementById('t3').classList.add('show');
+    document.getElementById('t3s').classList.add('show');
+  }, 3400);
+  setTimeout(() => {
+    document.getElementById('t-final').style.opacity = '1';
+  }, 5200);
+  setTimeout(() => {
+    document.getElementById('t-next-btn').style.opacity = '1';
+    document.getElementById('t-next-btn').style.pointerEvents = 'auto';
+  }, 6600);
+}
+
+// ══════════════════════════════════════════
+// LEVEL 4: EL CÓDIGO
+// ══════════════════════════════════════════
+function goToLevel4() {
+  showScreen('s-level4');
+  setProgress(60);
+}
+
+function checkCode() {
+  const val = document.getElementById('code-input').value.trim().toUpperCase();
+  const fb = document.getElementById('code-fb');
+  if (val === 'TINI40-LUZ-1986') {
+    fb.textContent = '✓ Código correcto. Recuerdo desbloqueado.';
+    fb.className = 'riddle-feedback feedback-ok';
+    setProgress(75);
+    setTimeout(goToLevel5, 1600);
+  } else if (val !== '') {
+    fb.textContent = '✗ Código incorrecto';
+    fb.className = 'riddle-feedback feedback-err';
+  }
+}
+
+document.getElementById('code-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkCode();
+});
+
+// ══════════════════════════════════════════
+// LEVEL 5: LA CAJA
+// ══════════════════════════════════════════
+function goToLevel5() {
+  showScreen('s-level5');
+}
+
+function checkAnswer5() {
+  const input = document.getElementById('ans-5');
+  const fb = document.getElementById('fb-5');
+  const val = normalize(input.value);
+  const valid = ANSWERS[5].map(normalize);
+  if (valid.includes(val)) {
+    fb.textContent = '✓ Último candado abierto.';
+    fb.className = 'riddle-feedback feedback-ok';
+    input.disabled = true;
+    document.getElementById('riddle-5').classList.add('solved');
+    setProgress(90);
+    setTimeout(goToFinal, 1600);
+  } else if (val !== '') {
+    fb.textContent = '✗ Intentá de nuevo';
+    fb.className = 'riddle-feedback feedback-err';
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (state.currentScreen === 's-level5' && e.key === 'Enter') checkAnswer5();
+  if (state.currentScreen === 's-level4' && e.key === 'Enter') checkCode();
+  if (state.currentScreen === 's-level1') {
+    for (let i=1;i<=4;i++) {
+      if (document.activeElement === document.getElementById('ans-'+i) && e.key === 'Enter') {
+        checkAnswer(i);
+      }
+    }
+  }
+});
+
+// ══════════════════════════════════════════
+// LEVEL FINAL
+// ══════════════════════════════════════════
+function goToFinal() {
+  showScreen('s-final');
+  runFinalSequence();
+}
+
+function runFinalSequence() {
+  const el = document.getElementById('s-final');
+  const pct = document.getElementById('final-percent');
+  const lampWrap = document.getElementById('lamp-wrap');
+
+  // 1. Fade to black slowly
+  setTimeout(() => { el.classList.add('going-dark'); }, 200);
+
+  // 2. Show percent counter
+  setTimeout(() => {
+    pct.classList.add('show');
+    const steps = ['20%','40%','60%','80%','100%'];
+    steps.forEach((s,i) => {
+      setTimeout(() => {
+        pct.textContent = s;
+        if (s === '100%') setProgress(100);
+      }, i * 500);
+    });
+  }, 1800);
+
+  // 3. Fade out percent, show lamp
+  setTimeout(() => {
+    pct.style.transition = 'opacity 1s';
+    pct.style.opacity = '0';
+  }, 5200);
+
+  setTimeout(() => {
+    pct.style.display = 'none';
+    lampWrap.style.display = 'flex';
+    setTimeout(() => lampWrap.classList.add('visible'), 50);
+  }, 6400);
+
+  // 4. Light up lamp
+  setTimeout(() => {
+    document.getElementById('lamp-light').classList.add('lit');
+    document.getElementById('lamp-svg').classList.add('lit');
+    document.getElementById('bulb-glow').setAttribute('r','8');
+    document.getElementById('bulb-glow').setAttribute('fill','rgba(255,230,100,0.9)');
+    document.getElementById('glow-bg').classList.add('lit');
+  }, 9000);
+
+  // 5. Final text
+  setTimeout(() => {
+    document.getElementById('f-text1').classList.add('show');
+  }, 12000);
+  setTimeout(() => {
+    document.getElementById('f-text2').classList.add('show');
+  }, 14000);
+  setTimeout(() => {
+    document.getElementById('f-text3').classList.add('show');
+  }, 16000);
+}
+</script>
+</body>
+</html>
